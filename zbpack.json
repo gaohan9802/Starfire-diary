@@ -1,0 +1,6 @@
+{
+  "python": {
+    "version": "3.12",
+    "entry": "diary_server.py"
+  }
+}
