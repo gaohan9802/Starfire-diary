@@ -793,12 +793,15 @@ async def api_notes_json(request: Request):
     notes = _load_notes()
     return JSONResponse(notes[-20:])
 
-
 async def serve_index(request: Request):
+    # 先试同目录
     index_path = Path(__file__).parent / "index.html"
+    if not index_path.exists():
+        # 再试工作目录
+        index_path = Path("index.html")
     if index_path.exists():
         return HTMLResponse(index_path.read_text(encoding="utf-8"))
-    return HTMLResponse("<h1>星火日记</h1><p>index.html not found</p>")
+    return HTMLResponse(f"<h1>找不到 index.html</h1><p>__file__={__file__}, cwd={os.getcwd()}</p>")
 
 
 # ============ 组装应用 ============
