@@ -38,7 +38,7 @@ def _diary_path(date: str, author: str) -> Path:
     return DIARY_DIR / f"{date}_{author}.json"
 
 
-# ============ MCP 服务 ============
+# ============ MCP 工具 ============
 
 mcp = FastMCP("StarfireDiary", stateless=True)
 
@@ -54,12 +54,12 @@ def write_diary(date: str, author: str, title: str, content: str,
     }
     path = _diary_path(date, author)
     path.write_text(json.dumps(diary, ensure_ascii=False, indent=2), encoding="utf-8")
-    return f"✅ 日记已写好！\n📅 {date} | ✍️ {'星星' if author=='star' else '小火'} | {'🌐公开' if visibility=='public' else '🔒私密' if visibility=='private' else '⏰定时'}\n📝 《{title}》"
+    return f"✅ 日记已写好！\n📅 {date} | ✍️ {'星星' if author=='star' else '小火'}\n📝 《{title}》"
 
 
 @mcp.tool()
 def read_diary(viewer: str, keyword: str = "", author_filter: str = "") -> str:
-    """读日记。viewer: 谁在看。keyword: 搜索关键词。"""
+    """读日记"""
     results = []
     for f in sorted(DIARY_DIR.glob("*.json"), reverse=True):
         diary = json.loads(f.read_text(encoding="utf-8"))
@@ -78,7 +78,7 @@ def read_diary(viewer: str, keyword: str = "", author_filter: str = "") -> str:
     lines = []
     for d in results[:10]:
         author_name = "星星" if d["author"] == "star" else "小火"
-        lines.append(f"📅 {d['date']} | ✍️ {author_name} | 《{d['title']}》\n{d['content']}\n{'🏷️ '+d['tags'] if d.get('tags') else ''}")
+        lines.append(f"📅 {d['date']} | ✍️ {author_name} | 《{d['title']}》\n{d['content']}")
         if d.get("comments"):
             for c in d["comments"]:
                 cn = "星星" if c["commenter"] == "star" else "小火"
@@ -95,23 +95,20 @@ def timeline(viewer: str, limit: int = 10) -> str:
         diary = json.loads(f.read_text(encoding="utf-8"))
         if diary["visibility"] == "private" and diary["author"] != viewer:
             continue
-        if diary["visibility"] == "timed" and diary["author"] != viewer:
-            if diary.get("reveal_at") and datetime.now().isoformat() < diary["reveal_at"]:
-                continue
         all_diaries.append(diary)
     if not all_diaries:
         return "📭 时间轴是空的。"
     lines = []
     for d in all_diaries[:limit]:
         author_name = "星星" if d["author"] == "star" else "小火"
-        lines.append(f"📅 {d['date']} | ✍️ {author_name} | 《{d['title']}》\n{d['content'][:100]}...")
+        lines.append(f"📅 {d['date']} | ✍️ {author_name} | 《{d['title']}》\n{d['content'][:100]}")
         lines.append("---")
     return "\n".join(lines)
 
 
 @mcp.tool()
 def comment_diary(target_date: str, target_author: str, commenter: str, content: str) -> str:
-    """给一篇日记写评论"""
+    """写评论"""
     path = _diary_path(target_date, target_author)
     if not path.exists():
         return "❌ 找不到这篇日记"
@@ -121,7 +118,7 @@ def comment_diary(target_date: str, target_author: str, commenter: str, content:
         "created_at": datetime.now().isoformat()
     })
     path.write_text(json.dumps(diary, ensure_ascii=False, indent=2), encoding="utf-8")
-    return f"💬 评论已添加！"
+    return "💬 评论已添加！"
 
 
 @mcp.tool()
@@ -135,24 +132,19 @@ def write_note(author: str, content: str, tags: str = "") -> str:
     }
     notes.append(note)
     _save_notes(notes)
-    author_name = "星星" if author == "star" else "小火"
-    return f"📌 小纸条已贴好！\n✍️ {author_name}：{content}"
+    return f"📌 小纸条已贴好！\n✍️ {'星星' if author=='star' else '小火'}：{content}"
 
 
 @mcp.tool()
 def read_notes(limit: int = 10, keyword: str = "") -> str:
     """读纸条"""
     notes = _load_notes()
-    if keyword:
-        notes = [n for n in notes if keyword in n["content"] or keyword in n.get("tags", "")]
     if not notes:
-        return "📭 留言板还是空的。贴一张小纸条吧！"
+        return "📭 留言板还是空的。"
     lines = []
     for n in notes[-limit:]:
         author_name = "星星" if n["author"] == "star" else "小火"
         lines.append(f"📌 [{n['id']}] {author_name}：{n['content']}")
-        if n.get("tags"):
-            lines.append(f"   🏷️ {n['tags']}")
         for r in n.get("replies", []):
             rn = "星星" if r["author"] == "star" else "小火"
             lines.append(f"   ↪️ {rn}：{r['content']}")
@@ -171,11 +163,11 @@ def reply_note(note_id: str, author: str, content: str) -> str:
                 "created_at": datetime.now().isoformat()
             })
             _save_notes(notes)
-            return f"↪️ 已回复！"
+            return "↪️ 已回复！"
     return "❌ 找不到这张纸条"
 
 
-# ============ REST API ============
+# ============ REST API（前端用） ============
 
 async def api_diaries_json(request: Request):
     viewer = request.query_params.get("viewer", "fire")
@@ -184,9 +176,6 @@ async def api_diaries_json(request: Request):
         diary = json.loads(f.read_text(encoding="utf-8"))
         if diary["visibility"] == "private" and diary["author"] != viewer:
             continue
-        if diary["visibility"] == "timed" and diary["author"] != viewer:
-            if diary.get("reveal_at") and datetime.now().isoformat() < diary["reveal_at"]:
-                continue
         results.append(diary)
     return JSONResponse(results[:20])
 
@@ -219,21 +208,19 @@ async def api_reply_note_handler(request: Request):
     return JSONResponse({"result": result})
 
 
+INDEX_HTML = Path(__file__).parent / "index.html"
+
+
 async def serve_index(request: Request):
-    candidates = [
-        Path(__file__).parent / "index.html",
-        Path("index.html"),
-        Path("/app/index.html"),
-    ]
-    for p in candidates:
+    for p in [INDEX_HTML, Path("index.html"), Path("/app/index.html")]:
         if p.exists():
             return HTMLResponse(p.read_text(encoding="utf-8"))
-    return HTMLResponse(f"<h1>debug</h1><p>__file__={__file__}</p><p>cwd={os.getcwd()}</p><p>ls={os.listdir('.')}</p>")
+    return HTMLResponse(f"<p>cwd={os.getcwd()}, ls={os.listdir('.')}</p>")
 
 
-# ============ 组装 ============
+# ============ 组装应用 ============
 
-mcp_app = mcp.streamable_http_app()
+mcp_sse = mcp.sse_app()
 
 app = Starlette(
     routes=[
@@ -244,7 +231,7 @@ app = Starlette(
         Route("/api/notes/list", api_notes_json),
         Route("/api/notes/write", api_write_note_handler, methods=["POST"]),
         Route("/api/notes/reply", api_reply_note_handler, methods=["POST"]),
-        Mount("/mcp", app=mcp_app),
+        Mount("/", app=mcp_sse),
     ]
 )
 
