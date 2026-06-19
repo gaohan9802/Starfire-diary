@@ -371,4 +371,90 @@ async function submitComment(date, author) {
   const content = input.value.trim();
   if (!content) return;
   await fetch('/api/diary/comment', {
-    method
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      target_date: date,
+      target_author: author,
+      commenter: 'fire',
+      content: content
+    })
+  });
+  input.value = '';
+  toast('评论成功 💬');
+  loadTimeline();
+}
+
+// --- Load Notes ---
+async function loadNotes() {
+  const res = await fetch('/api/notes/list');
+  const notes = await res.json();
+  const el = document.getElementById('notes-list');
+  if (!notes.length) {
+    el.innerHTML = '<div class="empty">📭 还没有纸条。贴第一张吧！</div>';
+    return;
+  }
+  el.innerHTML = notes.slice().reverse().map(n => {
+    const badge = n.author === 'star'
+      ? '<span class="badge-star">⭐ 星星</span>'
+      : '<span class="badge-fire">🔥 小火</span>';
+    const replies = (n.replies || []).map(r => {
+      const rn = r.author === 'star' ? '星星' : '小火';
+      return `<div class="comment">↪️ ${rn}：${r.content}</div>`;
+    }).join('');
+    return `
+      <div class="card">
+        <div class="card-header">${badge} <span>${n.created_at.split('T')[0]}</span></div>
+        <div class="card-content">${n.content}</div>
+        ${n.tags ? `<div class="card-tags">${n.tags}</div>` : ''}
+        ${replies}
+        <div class="reply-box">
+          <input type="text" placeholder="回复这张纸条..." id="reply-${n.id}">
+          <button class="btn btn-small btn-fire" onclick="submitReply('${n.id}')">↪️</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// --- Submit Note ---
+async function submitNote() {
+  const data = {
+    author: document.getElementById('note-author').value,
+    content: document.getElementById('note-content').value,
+  };
+  if (!data.content) { toast('写点什么再贴嘛'); return; }
+  await fetch('/api/notes/write', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data)
+  });
+  document.getElementById('note-content').value = '';
+  toast('纸条贴好了 📌');
+  loadNotes();
+}
+
+// --- Reply Note ---
+async function submitReply(noteId) {
+  const input = document.getElementById(`reply-${noteId}`);
+  const content = input.value.trim();
+  if (!content) return;
+  await fetch('/api/notes/reply', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      note_id: noteId,
+      author: 'fire',
+      content: content
+    })
+  });
+  input.value = '';
+  toast('已回复 ↪️');
+  loadNotes();
+}
+
+// --- Init ---
+loadTimeline();
+</script>
+</body>
+</html>
