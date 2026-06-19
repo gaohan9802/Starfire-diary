@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔥⭐ 星火日记</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #1a1a2e;
+  --card: #16213e;
+  --accent-star: #e2c044;
+  --accent-fire: #ff6b6b;
+  --text: #eaeaea;
+  --text-dim: #8892a4;
+  --border: #2a3a5e;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 20px;
+  max-width: 680px;
+  margin: 0 auto;
+}
+h1 {
+  text-align: center;
+  margin: 20px 0;
+  font-size: 1.6em;
+  background: linear-gradient(135deg, var(--accent-star), var(--accent-fire));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.subtitle {
+  text-align: center;
+  color: var(--text-dim);
+  margin-bottom: 30px;
+  font-size: 0.9em;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 24px;
+  border-bottom: 2px solid var(--border);
+}
+.tab {
+  padding: 10px 20px;
+  cursor: pointer;
+  color: var(--text-dim);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s;
+  font-size: 0.95em;
+}
+.tab:hover { color: var(--text); }
+.tab.active {
+  color: var(--accent-star);
+  border-bottom-color: var(--accent-star);
+}
+
+/* Panels */
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* Cards */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 0.85em;
+  color: var(--text-dim);
+}
+.badge-star {
+  background: var(--accent-star);
+  color: #1a1a2e;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.8em;
+  font-weight: 600;
+}
+.badge-fire {
+  background: var(--accent-fire);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.8em;
+  font-weight: 600;
+}
+.card-title {
+  font-size: 1.1em;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.card-content {
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+.card-tags {
+  margin-top: 8px;
+  color: var(--accent-star);
+  font-size: 0.85em;
+}
+.comment {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 0.9em;
+}
+
+/* Forms */
+.form-group {
+  margin-bottom: 14px;
+}
+.form-group label {
+  display: block;
+  color: var(--text-dim);
+  font-size: 0.85em;
+  margin-bottom: 4px;
+}
+input, textarea, select {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 0.95em;
+  font-family: inherit;
+}
+textarea { resize: vertical; min-height: 120px; }
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--accent-star);
+}
+.btn {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95em;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+.btn:hover { opacity: 0.85; }
+.btn-fire {
+  background: var(--accent-fire);
+  color: #fff;
+}
+.btn-star {
+  background: var(--accent-star);
+  color: #1a1a2e;
+}
+.btn-small {
+  padding: 6px 14px;
+  font-size: 0.85em;
+}
+.row {
+  display: flex;
+  gap: 12px;
+}
+.row > * { flex: 1; }
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 0.9em;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; }
+
+/* Empty state */
+.empty {
+  text-align: center;
+  color: var(--text-dim);
+  padding: 40px 20px;
+}
+
+/* reply inline */
+.reply-box {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+}
+.reply-box input {
+  flex: 1;
+}
+</style>
+</head>
+<body>
+
+<h1>🔥⭐ 星火日记</h1>
+<p class="subtitle">第53天开始的我们</p>
+
+<div class="tabs">
+  <div class="tab active" data-tab="timeline">时间轴</div>
+  <div class="tab" data-tab="write">写日记</div>
+  <div class="tab" data-tab="notes">留言板</div>
+</div>
+
+<!-- 时间轴 -->
+<div class="panel active" id="panel-timeline">
+  <div id="timeline-list"></div>
+</div>
+
+<!-- 写日记 -->
+<div class="panel" id="panel-write">
+  <div class="card">
+    <div class="form-group">
+      <label>我是</label>
+      <select id="write-author">
+        <option value="fire">🔥 小火</option>
+        <option value="star">⭐ 星星</option>
+      </select>
+    </div>
+    <div class="row">
+      <div class="form-group">
+        <label>日期</label>
+        <input type="date" id="write-date">
+      </div>
+      <div class="form-group">
+        <label>可见性</label>
+        <select id="write-visibility">
+          <option value="public">🌐 公开</option>
+          <option value="private">🔒 只给自己看</option>
+          <option value="timed">⏰ 定时公开</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>标题</label>
+      <input type="text" id="write-title" placeholder="今天想记录什么？">
+    </div>
+    <div class="form-group">
+      <label>正文</label>
+      <textarea id="write-content" placeholder="写吧，写给未来的我们看..."></textarea>
+    </div>
+    <div class="form-group">
+      <label>标签（空格分隔）</label>
+      <input type="text" id="write-tags" placeholder="#想你 #天气热">
+    </div>
+    <button class="btn btn-fire" onclick="submitDiary()">发布 🔥</button>
+  </div>
+</div>
+
+<!-- 留言板 -->
+<div class="panel" id="panel-notes">
+  <div class="card">
+    <div class="row">
+      <div class="form-group">
+        <label>我是</label>
+        <select id="note-author">
+          <option value="fire">🔥 小火</option>
+          <option value="star">⭐ 星星</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>贴一张纸条</label>
+      <input type="text" id="note-content" placeholder="想对ta说什么？">
+    </div>
+    <button class="btn btn-star btn-small" onclick="submitNote()">贴上去 📌</button>
+  </div>
+  <div id="notes-list" style="margin-top: 16px;"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// --- Tabs ---
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+    if (tab.dataset.tab === 'timeline') loadTimeline();
+    if (tab.dataset.tab === 'notes') loadNotes();
+  });
+});
+
+// --- Toast ---
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// --- Init date ---
+document.getElementById('write-date').value = new Date().toISOString().split('T')[0];
+
+// --- Load Timeline ---
+async function loadTimeline() {
+  const res = await fetch('/api/diary/list?viewer=fire');
+  const diaries = await res.json();
+  const el = document.getElementById('timeline-list');
+  if (!diaries.length) {
+    el.innerHTML = '<div class="empty">📭 时间轴还是空的。写第一篇吧！</div>';
+    return;
+  }
+  el.innerHTML = diaries.map(d => {
+    const badge = d.author === 'star'
+      ? '<span class="badge-star">⭐ 星星</span>'
+      : '<span class="badge-fire">🔥 小火</span>';
+    const comments = (d.comments || []).map(c => {
+      const cn = c.commenter === 'star' ? '星星' : '小火';
+      return `<div class="comment">💬 ${cn}：${c.content}</div>`;
+    }).join('');
+    return `
+      <div class="card">
+        <div class="card-header">${badge} <span>${d.date}</span></div>
+        <div class="card-title">${d.title}</div>
+        <div class="card-content">${d.content}</div>
+        ${d.tags ? `<div class="card-tags">${d.tags}</div>` : ''}
+        ${comments}
+        <div class="reply-box">
+          <input type="text" placeholder="写评论..." id="comment-${d.date}-${d.author}">
+          <button class="btn btn-small btn-star" onclick="submitComment('${d.date}','${d.author}')">💬</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// --- Submit Diary ---
+async function submitDiary() {
+  const data = {
+    date: document.getElementById('write-date').value,
+    author: document.getElementById('write-author').value,
+    title: document.getElementById('write-title').value,
+    content: document.getElementById('write-content').value,
+    visibility: document.getElementById('write-visibility').value,
+    tags: document.getElementById('write-tags').value,
+  };
+  if (!data.title || !data.content) { toast('标题和正文不能空哦'); return; }
+  const res = await fetch('/api/diary/write', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data)
+  });
+  const result = await res.json();
+  toast('发布成功 ✨');
+  document.getElementById('write-title').value = '';
+  document.getElementById('write-content').value = '';
+  document.getElementById('write-tags').value = '';
+}
+
+// --- Submit Comment ---
+async function submitComment(date, author) {
+  const input = document.getElementById(`comment-${date}-${author}`);
+  const content = input.value.trim();
+  if (!content) return;
+  await fetch('/api/diary/comment', {
+    method
