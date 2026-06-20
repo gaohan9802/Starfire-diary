@@ -310,7 +310,7 @@ def delete_diary(target_date: str, author: str, time_id: str = "") -> str:
     if time_id:
         p = DIARY_DIR / f"{target_date}_{time_id}_{author}.json"
     else:
-        matches = sorted(DIARY_DIR.glob(f"{target_date}_*_{author}.json"), reverse=True)
+        matches = sorted(DIARY_DIR.glob(f"{target_date}*{author}.json"), reverse=True)
         p = matches[0] if matches else None
     if not p or not p.exists():
         return "❌ 找不到这篇日记"
