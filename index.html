@@ -584,7 +584,7 @@ async function loadNotes() {
     const tagStr = Array.isArray(n.tags) ? n.tags.join(' ') : (n.tags || '');
     return `
       <div class="card">
-        <div class="card-header">${badge} <span>${n.created_at.split('T')[0]}</span></div>
+        <div class="card-header">${badge} <span>${n.created_at.split('T')[0]}</span> ${n.author === currentViewer ? `<button class="btn-danger" onclick="deleteNote('${n.id}','${n.author}')">删除</button>` : ''}</div>
         <div class="card-content">${n.content}</div>
         ${tagStr ? `<div class="card-tags">${tagStr}</div>` : ''}
         ${replies}
