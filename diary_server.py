@@ -19,6 +19,7 @@ from starlette.responses import HTMLResponse, JSONResponse
 from starlette.requests import Request
 from starlette.middleware.cors import CORSMiddleware
 from mcp.server.sse import SseServerTransport
+from starlette.responses import HTMLResponse, JSONResponse, FileResponse
 import uvicorn
 
 # ============================================================
@@ -374,6 +375,26 @@ def reply_note(note_id: str, author: str, content: str) -> str:
     note_path.write_text(json.dumps(note, ensure_ascii=False, indent=2), encoding="utf-8")
     return f"↪️ {AUTHORS[author]}回复了纸条：{content}"
 
+@mcp.tool()
+def delete_note(note_id: str, author: str) -> str:
+    """删除自己的小纸条。只能删自己贴的。
+
+    Args:
+        note_id: 纸条ID
+        author: 谁在删，star 或 fire
+    """
+    if author not in AUTHORS:
+        return "❌ author 必须是 star 或 fire"
+    note_path = NOTES_DIR / f"{note_id}.json"
+    if not note_path.exists():
+        return "❌ 找不到这张纸条"
+    note = json.loads(note_path.read_text(encoding="utf-8"))
+    if note["author"] != author:
+        return "❌ 只能删自己的纸条"
+    note_path.unlink()
+    return "🗑️ 纸条已撕掉"
+
+
 
 # ============================================================
 #  REST API（给网页前端用）
@@ -416,6 +437,11 @@ async def api_write_note_handler(request: Request):
 async def api_reply_note_handler(request: Request):
     data = await request.json()
     result = reply_note(**data)
+    return JSONResponse({"result": result})
+
+async def api_delete_note_handler(request: Request):
+    data = await request.json()
+    result = delete_note(data.get("note_id", ""), data.get("author", ""))
     return JSONResponse({"result": result})
 
 async def api_delete_diary_handler(request: Request):
@@ -464,6 +490,13 @@ async def serve_index(request: Request):
             return HTMLResponse(p.read_text(encoding="utf-8"))
     return HTMLResponse(f"<p>debug: cwd={os.getcwd()}, files={os.listdir('.')}</p>")
 
+async def serve_static(request: Request):
+    filename = request.path_params["filename"]
+    filepath = Path(__file__).parent / filename
+    if filepath.exists() and filepath.suffix in ('.png', '.jpg', '.gif', '.webp', '.ico'):
+        return FileResponse(filepath)
+    return JSONResponse({"error": "not found"}, status_code=404)
+
 
 # ============================================================
 #  启动
@@ -495,6 +528,8 @@ def create_app():
             Route("/sse", endpoint=handle_sse),
             Mount("/messages/", app=sse_transport.handle_post_message),
             Route("/api/diary/delete", api_delete_diary_handler, methods=["POST"]),
+            Route("/{filename:path}", serve_static),
+            Route("/api/notes/delete", api_delete_note_handler, methods=["POST"]),
         ],
     )
 
