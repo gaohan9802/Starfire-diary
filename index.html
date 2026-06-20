@@ -633,6 +633,18 @@ async function submitReply(noteId) {
   loadNotes();
 }
 
+async function deleteNote(noteId, author) {
+  if (!confirm('确定要撕掉这张纸条吗？')) return;
+  await fetch('/api/notes/delete', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ note_id: noteId, author: author })
+  });
+  toast('纸条已撕掉 🗑️');
+  loadNotes();
+}
+
+
 // --- Set Password ---
 async function setPassword() {
   const author = document.getElementById('pw-author').value;
