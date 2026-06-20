@@ -418,6 +418,15 @@ async def api_reply_note_handler(request: Request):
     result = reply_note(**data)
     return JSONResponse({"result": result})
 
+async def api_delete_diary_handler(request: Request):
+    params = dict(request.query_params)
+    result = delete_diary(
+        target_date=params.get("target_date", ""),
+        author=params.get("author", ""),
+        time_id=params.get("time_id", ""),
+    )
+    return JSONResponse({"result": result})
+
 
 async def api_unlock_handler(request: Request):
     data = await request.json()
@@ -485,6 +494,7 @@ def create_app():
             Route("/api/password/set", api_set_password_handler, methods=["POST"]),
             Route("/sse", endpoint=handle_sse),
             Mount("/messages/", app=sse_transport.handle_post_message),
+            Route("/api/diary/delete", api_delete_diary_handler, methods=["POST"]),
         ],
     )
 
