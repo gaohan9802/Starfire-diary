@@ -208,8 +208,8 @@ input:focus, textarea:focus, select:focus {
 </head>
 <body>
 
-<h1>🔥⭐ 星火日记</h1>
-<p class="subtitle">第53天开始的我们</p>
+<h1>星星和小火的日记本</h1>
+<p class="subtitle">星星之火</p>
 
 <div class="tabs">
   <div class="tab active" data-tab="timeline">时间轴</div>
@@ -245,6 +245,11 @@ input:focus, textarea:focus, select:focus {
           <option value="timed">⏰ 定时公开</option>
         </select>
       </div>
+          <div class="form-group" id="reveal-group" style="display:none;">
+            <label>什么时候让对方看到？</label>
+            <input type="datetime-local" id="write-reveal">
+          </div>
+
     </div>
     <div class="form-group">
       <label>标题</label>
@@ -308,6 +313,12 @@ function toast(msg) {
 
 // --- Init date ---
 document.getElementById('write-date').value = new Date().toISOString().split('T')[0];
+  // --- 延时公开时间选择器 ---
+document.getElementById('write-visibility').addEventListener('change', (e) => {
+  document.getElementById('reveal-group').style.display =
+    e.target.value === 'timed' ? 'block' : 'none';
+});
+
 
 // --- Load Timeline ---
 async function loadTimeline() {
@@ -351,6 +362,7 @@ async function submitDiary() {
     content: document.getElementById('write-content').value,
     visibility: document.getElementById('write-visibility').value,
     tags: document.getElementById('write-tags').value,
+    reveal_at: document.getElementById('write-reveal').value || '',
   };
   if (!data.title || !data.content) { toast('标题和正文不能空哦'); return; }
   const res = await fetch('/api/diary/write', {
