@@ -232,7 +232,7 @@ def read_diary(viewer: str, keyword: str = "", author_filter: str = "", target_d
     """
     if viewer not in AUTHORS:
         return "❌ viewer 必须是 star 或 fire"
-    all_entries = _list_all_entries()
+        all_entries = _list_all_entries()
     if not all_entries:
         return "📭 还没有日记。"
     if target_date:
