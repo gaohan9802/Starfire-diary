@@ -219,15 +219,24 @@ def write_diary(
     vis_text = {"public": "🌐公开", "private": "🔒私密", "timed": f"⏰定时"}
     return f"✅ 日记已写好！\n📅 {date} {time_id} | ✍️ {AUTHORS[author]} | {vis_text[visibility]}\n📝 《{title}》"
 
+    
+    @mcp.tool()
+def read_diary(viewer: str, keyword: str = "", author_filter: str = "", target_date: str = "") -> str:
+    """读日记。上锁的日记会显示存在但内容隐藏，需要密码解锁。
 
-@mcp.tool()
-def read_diary(viewer: str, keyword: str = "", author_filter: str = "") -> str:
-    """读日记。上锁的日记会显示存在但内容隐藏，需要密码解锁。"""
+    Args:
+        viewer: 谁在读，star 或 fire
+        keyword: 关键词搜索（可选）
+        author_filter: 只看某人的日记（可选），star 或 fire
+        target_date: 只看某天的日记（可选），格式 YYYY-MM-DD
+    """
     if viewer not in AUTHORS:
         return "❌ viewer 必须是 star 或 fire"
     all_entries = _list_all_entries()
     if not all_entries:
         return "📭 还没有日记。"
+    if target_date:
+        all_entries = [e for e in all_entries if e["date"] == target_date]
     if author_filter:
         all_entries = [e for e in all_entries if e["author"] == author_filter]
     if keyword:
