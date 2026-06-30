@@ -418,11 +418,11 @@ async def api_diaries_json(request: Request):
             results.append(e)
         else:
             results.append(_redact_entry(e))
-    return JSONResponse(results[:20])
+    return JSONResponse(results)
 
 
 async def api_notes_json(request: Request):
-    return JSONResponse(_load_all_notes()[:20])
+    return JSONResponse(_load_all_notes())
 
 
 async def api_write_diary_handler(request: Request):
