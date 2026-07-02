@@ -320,6 +320,55 @@ async def serve_index(request: Request):
 #  启动
 # ============================================================
 
+
+# ============ TEMP EXPORT ============
+async def api_export_all(request: Request):
+    """Temporary: export all local file data for migration."""
+    import glob
+    diaries = []
+    notes = []
+    
+    diary_dir = Path(os.environ.get("DIARY_DIR", "./diaries"))
+    notes_dir = Path(os.environ.get("NOTES_DIR", "./notes"))
+    
+    if diary_dir.exists():
+        for f in sorted(diary_dir.glob("*.json")):
+            try:
+                entry = json.loads(f.read_text(encoding="utf-8"))
+                diaries.append(entry)
+            except:
+                pass
+    
+    if notes_dir.exists():
+        for f in sorted(notes_dir.glob("*.json")):
+            try:
+                note = json.loads(f.read_text(encoding="utf-8"))
+                notes.append(note)
+            except:
+                pass
+    
+    # Also check config
+    config_file = Path(os.environ.get("CONFIG_FILE", "./config.json"))
+    config = {}
+    if config_file.exists():
+        try:
+            config = json.loads(config_file.read_text(encoding="utf-8"))
+        except:
+            pass
+    
+    return JSONResponse({
+        "diaries_count": len(diaries),
+        "notes_count": len(notes),
+        "diaries": diaries,
+        "notes": notes,
+        "config": config,
+        "cwd": os.getcwd(),
+        "ls_root": os.listdir("."),
+        "ls_diaries": os.listdir(str(diary_dir)) if diary_dir.exists() else "NOT FOUND",
+        "ls_notes": os.listdir(str(notes_dir)) if notes_dir.exists() else "NOT FOUND",
+    })
+# ============ END TEMP EXPORT ============
+
 def create_app():
     sse_transport = SseServerTransport("/messages/")
 
@@ -337,6 +386,7 @@ def create_app():
             Route("/", serve_index),
             Route("/api/diary/list", api_diaries_json),
             Route("/api/notes/list", api_notes_json),
+            Route("/api/export", api_export_all),
             Route("/sse", endpoint=handle_sse),
             Mount("/messages/", app=sse_transport.handle_post_message),
         ],
